@@ -399,6 +399,7 @@
 
         function openUserModal() {
           if (userData) {
+            console.log("Loading user data:", userData);
             userNameInput.value = userData.name;
             userAddressInput.value = userData.address;
           }
