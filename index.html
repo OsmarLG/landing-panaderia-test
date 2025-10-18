@@ -492,21 +492,20 @@
         orderHistoryModalOverlay.addEventListener("click", closeOrderHistoryModal);
 
         checkoutBtn.addEventListener("click", () => {
-            if (!userData) {
-                openUserModal();
-                  } else {
-                      const order = {
-                            date: new Date(),
-                                  items: Array.from(cart.values()),
-                                      };
-                                          orderHistory.push(order);
-                                              localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
-                                                  const url = buildWhatsappURL();
-                                                      clearCart();
-                                                          window.location.href = url; // ✅ en vez de window.open(...)
-                                                            }
-                                                            });
-        })
+          if (!userData) {
+              openUserModal();
+                } else {
+                    const order = {
+                          date: new Date(),
+                                items: Array.from(cart.values()),
+                                    };
+                                        orderHistory.push(order);
+                                            localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
+                                                const url = buildWhatsappURL();
+                                                    clearCart();
+                                                        window.location.href = url; // ✅ en vez de window.open(...)
+                                                          }
+                                                          });
 
         clearCartBtn.addEventListener("click", () => {
           clearCart();
@@ -518,7 +517,6 @@
         if (!userData) {
           openUserModal();
         }
-        //el
       });
     </script>
   </body>
