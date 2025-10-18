@@ -40,6 +40,12 @@
             >0</span
           >
         </button>
+        <button
+          id="open-user-modal"
+          class="relative flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2 hover:bg-amber-100/60 transition"
+        >
+          👤 <span>Usuario</span>
+        </button>
       </div>
     </header>
 
@@ -157,6 +163,37 @@
       </aside>
     </div>
 
+    <!-- USER MODAL -->
+    <div id="user-modal" class="fixed inset-0 z-[60] hidden">
+      <div class="absolute inset-0 bg-black/40" id="user-modal-overlay"></div>
+      <aside
+        class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col"
+      >
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+          <h4 class="text-lg font-bold">Tus datos</h4>
+          <button id="close-user-modal" class="p-2 rounded hover:bg-amber-100">
+            ✕
+          </button>
+        </div>
+        <div class="p-4 space-y-3">
+          <div>
+            <label for="user-name" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <input type="text" id="user-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm">
+          </div>
+          <div>
+            <label for="user-address" class="block text-sm font-medium text-gray-700">Dirección</label>
+            <input type="text" id="user-address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm">
+          </div>
+          <button
+            id="save-user-data"
+            class="w-full rounded-full bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 font-semibold shadow"
+          >
+            Guardar datos
+          </button>
+        </div>
+      </aside>
+    </div>
+
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const products = [
@@ -181,7 +218,17 @@
         const subtotalEl = document.getElementById("cart-subtotal");
         const checkoutBtn = document.getElementById("checkout-whatsapp");
         const clearCartBtn = document.getElementById("clear-cart");
-        const cart = new Map();
+
+        const userModal = document.getElementById("user-modal");
+        const userModalOverlay = document.getElementById("user-modal-overlay");
+        const openUserModalBtn = document.getElementById("open-user-modal");
+        const closeUserModalBtn = document.getElementById("close-user-modal");
+        const saveUserDataBtn = document.getElementById("save-user-data");
+        const userNameInput = document.getElementById("user-name");
+        const userAddressInput = document.getElementById("user-address");
+
+        let cart = new Map(JSON.parse(localStorage.getItem("cart") || "[]"));
+        let userData = JSON.parse(localStorage.getItem("userData") || "null");
 
         function renderProducts() {
           grid.innerHTML = products
@@ -244,6 +291,7 @@
         }
 
         function updateCartUI() {
+          localStorage.setItem("cart", JSON.stringify(Array.from(cart.entries())));
           const { qty, subtotal } = cartTotals();
           cartCount.textContent = qty;
           subtotalEl.textContent = money.format(subtotal);
@@ -307,10 +355,39 @@
           }
           const { subtotal } = cartTotals();
           lines.push(`Subtotal: ${money.format(subtotal)}`);
-          lines.push("Nombre:");
-          lines.push("Dirección:");
+          if (userData) {
+            lines.push(`Nombre: ${userData.name}`);
+            lines.push(`Dirección: ${userData.address}`);
+          } else {
+            lines.push("Nombre:");
+            lines.push("Dirección:");
+          }
           const text = encodeURIComponent(lines.join("\n"));
           return `https://wa.me/526151559659?text=${text}&type=phone_number&app_absent=0`;
+        }
+
+        function openUserModal() {
+          if (userData) {
+            userNameInput.value = userData.name;
+            userAddressInput.value = userData.address;
+          }
+          userModal.classList.remove("hidden");
+        }
+
+        function closeUserModal() {
+          userModal.classList.add("hidden");
+        }
+
+        function saveUserData() {
+          const name = userNameInput.value.trim();
+          const address = userAddressInput.value.trim();
+          if (name && address) {
+            userData = { name, address };
+            localStorage.setItem("userData", JSON.stringify(userData));
+            closeUserModal();
+          } else {
+            alert("Por favor, ingresa tu nombre y dirección.");
+          }
         }
 
         // Eventos
@@ -320,8 +397,17 @@
         closeCartBtn.addEventListener("click", closeCart);
         overlay.addEventListener("click", closeCart);
 
+        openUserModalBtn.addEventListener("click", openUserModal);
+        closeUserModalBtn.addEventListener("click", closeUserModal);
+        userModalOverlay.addEventListener("click", closeUserModal);
+        saveUserDataBtn.addEventListener("click", saveUserData);
+
         checkoutBtn.addEventListener("click", () => {
-          window.location.href = buildWhatsappURL(); // ✅ funciona en hosting y local
+          if (!userData) {
+            openUserModal();
+          } else {
+            window.location.href = buildWhatsappURL();
+          }
         });
 
         clearCartBtn.addEventListener("click", () => {
@@ -330,6 +416,10 @@
 
         renderProducts();
         updateCartUI();
+
+        if (!userData) {
+          openUserModal();
+        }
         //el
       });
     </script>
