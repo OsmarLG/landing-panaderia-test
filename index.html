@@ -572,28 +572,32 @@
 
         checkoutBtn.addEventListener("click", () => {
           if (!userData) {
-              openUserModal();
-                  return;
-                    }
-                    
-                      const order = {
-                          date: new Date(),
-                              items: Array.from(cart.values()),
-                                };
+            openUserModal();
+            return;
+          }
 
-                                  orderHistory.push(order);
-                                    localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
+          const order = {
+            date: new Date(),
+            items: Array.from(cart.values()),
+          };
 
-                                      const url = buildWhatsappURL();
-                                        clearCart();
+          orderHistory.push(order);
+          localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
 
-                                          // 🔹 Muestra feedback visual
-                                            checkoutBtn.textContent = "Abriendo WhatsApp...";
-                                              checkoutBtn.disabled = true;
+          const url = buildWhatsappURL();
+          clearCart();
 
-                                                // 🔸 Redirección directa y limpia (misma pestaña)
-                                                  window.location.assign(url);
-                                                  });
+          // 🔹 Muestra feedback visual
+          checkoutBtn.textContent = "Abriendo WhatsApp...";
+          checkoutBtn.disabled = true;
+
+          // 🔸 Redirección directa y limpia
+          if (window.innerWidth >= 768) {
+            window.open(url, '_blank');
+          } else {
+            window.location.assign(url);
+          }
+        });
 
         clearCartBtn.addEventListener("click", () => {
           clearCart();
