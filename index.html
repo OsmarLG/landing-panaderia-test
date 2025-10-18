@@ -494,17 +494,37 @@
         checkoutBtn.addEventListener("click", () => {
           if (!userData) {
             openUserModal();
-          } else {
-            const order = {
-              date: new Date(),
-              items: Array.from(cart.values()),
-            };
-            orderHistory.push(order);
-            localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
-            window.open(buildWhatsappURL(), '_blank');
-            clearCart();
+            return;
           }
-        });
+                    
+                      const order = {
+                          date: new Date(),
+                              items: Array.from(cart.values()),
+                                };
+                                  orderHistory.push(order);
+                                    localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
+
+                                      const url = buildWhatsappURL();
+                                        clearCart();
+
+                                          // 🔸 Mostrar mensaje de confirmación antes de redirigir
+                                            checkoutBtn.textContent = "Abriendo WhatsApp...";
+                                              checkoutBtn.disabled = true;
+
+                                                // 🔹 Intentar abrir en una nueva pestaña (solo desktop)
+                                                  const win = window.open(url, "_blank");
+
+                                                    // 🔸 Si el navegador bloquea (como en móvil), hacer redirect directo
+                                                      if (!win || win.closed || typeof win.closed === "undefined") {
+                                                          window.location.href = url;
+                                                            }
+
+                                                              // 🔹 Pequeña animación visual opcional
+                                                                setTimeout(() => {
+                                                                    checkoutBtn.textContent = "Finalizar por WhatsApp";
+                                                                        checkoutBtn.disabled = false;
+                                                                          }, 3000);
+                                                                          });
 
         clearCartBtn.addEventListener("click", () => {
           clearCart();
