@@ -46,6 +46,12 @@
         >
           👤 <span>Usuario</span>
         </button>
+        <button
+          id="open-order-history-modal"
+          class="relative flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2 hover:bg-amber-100/60 transition"
+        >
+          📜 <span>Historial</span>
+        </button>
       </div>
     </header>
 
@@ -143,11 +149,19 @@
             <span class="text-gray-600">Subtotal</span>
             <span id="cart-subtotal" class="font-semibold">$0.00</span>
           </div>
-          <button
+          <a
             id="checkout-whatsapp"
-            class="w-full rounded-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            href="#"
+            target="_blank"
+            class="block w-full text-center rounded-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Finalizar por WhatsApp
+          </a>
+          <button
+            id="clear-cart"
+            class="w-full rounded-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Vaciar carrito
           </button>
           <p class="text-xs text-gray-500 text-center">
             Se abrirá WhatsApp con tu pedido listo para enviar al
@@ -188,6 +202,22 @@
       </aside>
     </div>
 
+    <!-- ORDER HISTORY MODAL -->
+    <div id="order-history-modal" class="fixed inset-0 z-[60] hidden">
+      <div class="absolute inset-0 bg-black/40" id="order-history-modal-overlay"></div>
+      <aside
+        class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col"
+      >
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+          <h4 class="text-lg font-bold">Historial de pedidos</h4>
+          <button id="close-order-history-modal" class="p-2 rounded hover:bg-amber-100">
+            ✕
+          </button>
+        </div>
+        <div id="order-history-items" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+      </aside>
+    </div>
+
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const products = [
@@ -211,6 +241,7 @@
         const itemsWrap = document.getElementById("cart-items");
         const subtotalEl = document.getElementById("cart-subtotal");
         const checkoutBtn = document.getElementById("checkout-whatsapp");
+        const clearCartBtn = document.getElementById("clear-cart");
 
         const userModal = document.getElementById("user-modal");
         const userModalOverlay = document.getElementById("user-modal-overlay");
@@ -220,8 +251,15 @@
         const userNameInput = document.getElementById("user-name");
         const userAddressInput = document.getElementById("user-address");
 
+        const orderHistoryModal = document.getElementById("order-history-modal");
+        const orderHistoryModalOverlay = document.getElementById("order-history-modal-overlay");
+        const openOrderHistoryModalBtn = document.getElementById("open-order-history-modal");
+        const closeOrderHistoryModalBtn = document.getElementById("close-order-history-modal");
+        const orderHistoryItems = document.getElementById("order-history-items");
+
         let cart = new Map(JSON.parse(localStorage.getItem("cart") || "[]"));
         let userData = JSON.parse(localStorage.getItem("userData") || "null");
+        let orderHistory = JSON.parse(localStorage.getItem("orderHistory") || "[]");
 
         function renderProducts() {
           grid.innerHTML = products
@@ -258,6 +296,10 @@
 
         function removeFromCart(id) {
           cart.delete(id);
+          updateCartUI();
+        }
+        function clearCart() {
+          cart.clear();
           updateCartUI();
         }
 
@@ -333,6 +375,7 @@
           }
 
           checkoutBtn.disabled = qty === 0;
+          clearCartBtn.disabled = qty === 0;
         }
 
         // ✅ Enlace WhatsApp usando wa.me (no bloquea)
@@ -378,6 +421,59 @@
           }
         }
 
+        function renderOrderHistory() {
+          orderHistoryItems.innerHTML = orderHistory.map((order, index) => `
+            <div class="p-4 border rounded-lg">
+              <div class="flex justify-between items-center">
+                <h3 class="font-bold">Pedido #${index + 1}</h3>
+                <div class="text-sm text-gray-500">${new Date(order.date).toLocaleString()}</div>
+              </div>
+              <div class="mt-2">
+                <ul>
+                  ${order.items.map(item => `<li>${item.product.name} x ${item.qty}</li>`).join("")}
+                </ul>
+              </div>
+              <div class="mt-2 flex gap-2">
+                <button class="re-order-btn text-sm bg-green-500 text-white px-2 py-1 rounded" data-order-index="${index}">Re-ordenar</button>
+                <button class="forget-order-btn text-sm bg-red-500 text-white px-2 py-1 rounded" data-order-index="${index}">Olvidar</button>
+              </div>
+            </div>
+          `).join("");
+
+          orderHistoryItems.querySelectorAll(".re-order-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+              const orderIndex = btn.dataset.orderIndex;
+              const order = orderHistory[orderIndex];
+              order.items.forEach(item => {
+                const entry = cart.get(item.product.id) || { product: item.product, qty: 0 };
+                entry.qty += item.qty;
+                cart.set(item.product.id, entry);
+              });
+              updateCartUI();
+              closeOrderHistoryModal();
+              openCart();
+            });
+          });
+
+          orderHistoryItems.querySelectorAll(".forget-order-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+              const orderIndex = btn.dataset.orderIndex;
+              orderHistory.splice(orderIndex, 1);
+              localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
+              renderOrderHistory();
+            });
+          });
+        }
+
+        function openOrderHistoryModal() {
+          renderOrderHistory();
+          orderHistoryModal.classList.remove("hidden");
+        }
+
+        function closeOrderHistoryModal() {
+          orderHistoryModal.classList.add("hidden");
+        }
+
         // Eventos
         const openCart = () => drawer.classList.remove("hidden");
         const closeCart = () => drawer.classList.add("hidden");
@@ -390,12 +486,27 @@
         userModalOverlay.addEventListener("click", closeUserModal);
         saveUserDataBtn.addEventListener("click", saveUserData);
 
+        openOrderHistoryModalBtn.addEventListener("click", openOrderHistoryModal);
+        closeOrderHistoryModalBtn.addEventListener("click", closeOrderHistoryModal);
+        orderHistoryModalOverlay.addEventListener("click", closeOrderHistoryModal);
+
         checkoutBtn.addEventListener("click", () => {
           if (!userData) {
             openUserModal();
           } else {
-            window.location.href = buildWhatsappURL();
+            const order = {
+              date: new Date(),
+              items: Array.from(cart.values()),
+            };
+            orderHistory.push(order);
+            localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
+            window.open(buildWhatsappURL(), '_blank');
+            clearCart();
           }
+        });
+
+        clearCartBtn.addEventListener("click", () => {
+          clearCart();
         });
 
         renderProducts();
