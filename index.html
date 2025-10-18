@@ -143,6 +143,12 @@
           >
             Finalizar por WhatsApp
           </button>
+          <button
+            id="clear-cart"
+            class="w-full rounded-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Vaciar carrito
+          </button>
           <p class="text-xs text-gray-500 text-center">
             Se abrirá WhatsApp con tu pedido listo para enviar al
             <strong>6151559659</strong>.
@@ -174,6 +180,7 @@
         const itemsWrap = document.getElementById("cart-items");
         const subtotalEl = document.getElementById("cart-subtotal");
         const checkoutBtn = document.getElementById("checkout-whatsapp");
+        const clearCartBtn = document.getElementById("clear-cart");
         const cart = new Map();
 
         function renderProducts() {
@@ -211,6 +218,10 @@
 
         function removeFromCart(id) {
           cart.delete(id);
+          updateCartUI();
+        }
+        function clearCart() {
+          cart.clear();
           updateCartUI();
         }
 
@@ -285,6 +296,7 @@
           }
 
           checkoutBtn.disabled = qty === 0;
+          clearCartBtn.disabled = qty === 0;
         }
 
         // ✅ Enlace WhatsApp usando wa.me (no bloquea)
@@ -310,6 +322,10 @@
 
         checkoutBtn.addEventListener("click", () => {
           window.location.href = buildWhatsappURL(); // ✅ funciona en hosting y local
+        });
+
+        clearCartBtn.addEventListener("click", () => {
+          clearCart();
         });
 
         renderProducts();
