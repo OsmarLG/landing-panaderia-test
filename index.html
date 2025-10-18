@@ -494,18 +494,27 @@
         checkoutBtn.addEventListener("click", () => {
           if (!userData) {
               openUserModal();
-                } else {
-                    const order = {
+                  return;
+                    }
+                    
+                      const order = {
                           date: new Date(),
-                                items: Array.from(cart.values()),
-                                    };
-                                        orderHistory.push(order);
-                                            localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
-                                                const url = buildWhatsappURL();
-                                                    clearCart();
-                                                        window.location.href = url; // ✅ en vez de window.open(...)
-                                                          }
-                                                          });
+                              items: Array.from(cart.values()),
+                                };
+
+                                  orderHistory.push(order);
+                                    localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
+
+                                      const url = buildWhatsappURL();
+                                        clearCart();
+
+                                          // 🔹 Muestra feedback visual
+                                            checkoutBtn.textContent = "Abriendo WhatsApp...";
+                                              checkoutBtn.disabled = true;
+
+                                                // 🔸 Redirección directa y limpia (misma pestaña)
+                                                  window.location.assign(url);
+                                                  });
 
         clearCartBtn.addEventListener("click", () => {
           clearCart();
